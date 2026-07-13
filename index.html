@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FRM Level 1 Progress Tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-soft: #eef3f6;
+      --text: #18202a;
+      --muted: #687381;
+      --line: #dce3ea;
+      --primary: #0f766e;
+      --primary-dark: #0b5f59;
+      --accent: #7c3aed;
+      --complete: #16a34a;
+      --revise: #2563eb;
+      --shadow: 0 12px 30px rgba(24, 32, 42, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 16px;
+      align-items: start;
+      margin-bottom: 20px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: clamp(1.75rem, 3vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .title-block p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      max-width: 720px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 650;
+      transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+    }
+
+    .button:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .button.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .auth-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .sync-status {
+      max-width: 280px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 650;
+      text-align: right;
+    }
+
+    .sync-status.cloud {
+      color: var(--primary-dark);
+    }
+
+    .sync-status.warning {
+      color: #9a3412;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 22px;
+    }
+
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .metric span {
+      color: var(--muted);
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 650;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.75rem;
+      line-height: 1.1;
+    }
+
+    .overall-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 22px;
+    }
+
+    .progress-group {
+      min-width: 0;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .progress-track {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-soft);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      transition: width 180ms ease;
+    }
+
+    .progress-fill.complete {
+      background: var(--complete);
+    }
+
+    .progress-fill.revised {
+      background: var(--revise);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.1fr 0.6fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      padding: 9px 11px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    }
+
+    .books {
+      display: grid;
+      gap: 16px;
+    }
+
+    .book {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .book-header {
+      display: grid;
+      grid-template-columns: 1fr minmax(220px, 0.45fr);
+      gap: 16px;
+      align-items: center;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .book-title h2 {
+      margin: 0;
+      font-size: 1.18rem;
+      letter-spacing: 0;
+    }
+
+    .book-title p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .book-stats {
+      display: grid;
+      gap: 10px;
+    }
+
+    .topic-list {
+      display: grid;
+    }
+
+    .topic-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 132px 112px;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topic-row:last-child {
+      border-bottom: 0;
+    }
+
+    .topic-name {
+      min-width: 0;
+      font-weight: 620;
+    }
+
+    .topic-name small {
+      display: block;
+      color: var(--muted);
+      font-weight: 550;
+      margin-top: 2px;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      color: var(--text);
+      font-weight: 650;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .check input {
+      width: 19px;
+      height: 19px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .empty-state {
+      display: none;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+    }
+
+    .empty-state.visible {
+      display: block;
+    }
+
+    @media (max-width: 860px) {
+      .topbar,
+      .overall-panel,
+      .toolbar,
+      .book-header {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .auth-panel {
+        align-items: flex-start;
+      }
+
+      .sync-status {
+        text-align: left;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topic-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .topic-name {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-shell {
+        width: min(100% - 22px, 1180px);
+        padding-top: 16px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric {
+        padding: 14px;
+      }
+
+      .overall-panel,
+      .book-header {
+        padding: 14px;
+      }
+
+      .topic-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 13px 14px;
+      }
+
+      .check {
+        justify-content: space-between;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 8px 10px;
+        background: var(--surface-soft);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="topbar" aria-labelledby="page-title">
+      <div class="title-block">
+        <h1 id="page-title">FRM Level 1 Progress Tracker</h1>
+        <p>Track completion and revision across the four Level 1 books. This is a sample static version with placeholder topics that we can replace with your exact book/topic list.</p>
+      </div>
+      <div class="actions">
+        <button class="button" id="clearSearch" type="button">Clear Search</button>
+        <button class="button primary" id="resetProgress" type="button">Reset Progress</button>
+      </div>
+      <div class="auth-panel" aria-label="Cloud sync">
+        <div class="actions">
+          <button class="button primary" id="signInButton" type="button">Sign in with Google</button>
+          <button class="button" id="signOutButton" type="button" hidden>Sign out</button>
+        </div>
+        <div class="sync-status" id="syncStatus">Local-only mode. Add Firebase config to enable cloud sync.</div>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Progress summary">
+      <div class="metric">
+        <span>Total Topics</span>
+        <strong id="totalTopics">0</strong>
+      </div>
+      <div class="metric">
+        <span>Completed</span>
+        <strong id="completedCount">0</strong>
+      </div>
+      <div class="metric">
+        <span>Revised</span>
+        <strong id="revisedCount">0</strong>
+      </div>
+      <div class="metric">
+        <span>Remaining</span>
+        <strong id="remainingCount">0</strong>
+      </div>
+    </section>
+
+    <section class="overall-panel" aria-label="Overall progress">
+      <div class="progress-group">
+        <div class="progress-label">
+          <span>Overall Completion</span>
+          <span id="overallCompleteLabel">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill complete" id="overallCompleteBar"></div>
+        </div>
+      </div>
+      <div class="progress-group">
+        <div class="progress-label">
+          <span>Overall Revision</span>
+          <span id="overallRevisionLabel">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill revised" id="overallRevisionBar"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Filters">
+      <div class="field">
+        <label for="topicSearch">Search topics</label>
+        <input id="topicSearch" type="search" placeholder="Search by book or topic">
+      </div>
+      <div class="field">
+        <label for="bookFilter">Book filter</label>
+        <select id="bookFilter">
+          <option value="all">All books</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="books" id="books" aria-label="FRM books and topics"></section>
+    <section class="empty-state" id="emptyState">No topics match your current filter.</section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      onAuthStateChanged,
+      signInWithPopup,
+      signInWithRedirect,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+    import {
+      doc,
+      getDoc,
+      getFirestore,
+      serverTimestamp,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDtGuI2DcfwntGZmkGqaXBodxyhsLPygf4",
+      authDomain: "frmtracker.firebaseapp.com",
+      projectId: "frmtracker",
+      storageBucket: "frmtracker.firebasestorage.app",
+      messagingSenderId: "170588499208",
+      appId: "1:170588499208:web:7e257b2a8bafed540b90bd"
+    };
+
+    const books = [
+      {
+        id: "foundations",
+        title: "Book 1: Foundations of Risk Management",
+        description: "Core risk principles, governance, and risk frameworks.",
+        topics: [
+          "Risk Management: A Helicopter View",
+          "The Global Financial Crisis and Risk Failures",
+          "Corporate Risk Governance",
+          "Enterprise Risk Management",
+          "Risk Appetite and Risk Culture",
+          "Financial Disasters and Lessons Learned",
+          "Capital Allocation and Risk Contribution",
+          "Data Quality and Model Risk",
+          "Ethics and Professional Standards",
+          "Introduction to Stress Testing"
+        ]
+      },
+      {
+        id: "quantitative",
+        title: "Book 2: Quantitative Analysis",
+        description: "Probability, statistics, regression, simulation, and time series.",
+        topics: [
+          "Fundamentals of Probability",
+          "Random Variables and Distributions",
+          "Expected Value, Variance, and Moments",
+          "Hypothesis Testing and Confidence Intervals",
+          "Linear Regression",
+          "Multiple Regression and Diagnostics",
+          "Simulation Methods",
+          "Estimating Volatilities and Correlations",
+          "Time Series Analysis",
+          "Machine Learning Basics for Risk"
+        ]
+      },
+      {
+        id: "markets",
+        title: "Book 3: Financial Markets and Products",
+        description: "Markets, instruments, derivatives, and product mechanics.",
+        topics: [
+          "Banks and Financial Intermediation",
+          "Insurance Companies and Pension Plans",
+          "Mutual Funds and Hedge Funds",
+          "Exchanges, OTC Markets, and Clearing",
+          "Forward and Futures Contracts",
+          "Interest Rate Futures",
+          "Swaps and Swap Valuation",
+          "Options Markets",
+          "Option Trading Strategies",
+          "Credit Derivatives"
+        ]
+      },
+      {
+        id: "valuation",
+        title: "Book 4: Valuation and Risk Models",
+        description: "Valuation tools, fixed income, VaR, and risk measurement.",
+        topics: [
+          "Measures of Financial Risk",
+          "Value at Risk",
+          "Expected Shortfall",
+          "Backtesting VaR Models",
+          "Fixed Income Valuation",
+          "Duration and Convexity",
+          "Interest Rate Models",
+          "Option Valuation",
+          "The Greeks",
+          "Operational Risk Measurement"
+        ]
+      }
+    ];
+
+    const storageKey = "frm-level-1-progress-v1";
+    let state = loadLocalState();
+    let auth = null;
+    let db = null;
+    let currentUser = null;
+
+    const booksEl = document.getElementById("books");
+    const bookFilterEl = document.getElementById("bookFilter");
+    const topicSearchEl = document.getElementById("topicSearch");
+    const emptyStateEl = document.getElementById("emptyState");
+    const signInButtonEl = document.getElementById("signInButton");
+    const signOutButtonEl = document.getElementById("signOutButton");
+    const syncStatusEl = document.getElementById("syncStatus");
+
+    function topicId(bookId, topicIndex) {
+      return `${bookId}-${topicIndex}`;
+    }
+
+    function loadLocalState() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey)) || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveLocalState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function firebaseIsConfigured() {
+      return Object.values(firebaseConfig).every((value) => {
+        return typeof value === "string" &&
+          value.length > 0 &&
+          !value.includes("PASTE_") &&
+          !value.includes("YOUR_PROJECT_ID");
+      });
+    }
+
+    function setSyncStatus(message, type = "") {
+      syncStatusEl.textContent = message;
+      syncStatusEl.className = `sync-status ${type}`.trim();
+    }
+
+    function sanitizeState(progressState) {
+      return Object.fromEntries(
+        Object.entries(progressState).map(([id, status]) => [
+          id,
+          {
+            completed: Boolean(status.completed),
+            revised: Boolean(status.revised)
+          }
+        ])
+      );
+    }
+
+    function mergeProgress(primary, secondary) {
+      const merged = sanitizeState(primary || {});
+      Object.entries(sanitizeState(secondary || {})).forEach(([id, status]) => {
+        if (!merged[id]) {
+          merged[id] = status;
+          return;
+        }
+
+        merged[id].completed = merged[id].completed || status.completed;
+        merged[id].revised = merged[id].revised || status.revised;
+      });
+      return merged;
+    }
+
+    function userProgressDoc(userId) {
+      return doc(db, "users", userId, "trackers", "frm-level-1");
+    }
+
+    async function loadCloudState(user) {
+      setSyncStatus("Loading cloud progress...", "cloud");
+      const snapshot = await getDoc(userProgressDoc(user.uid));
+      const cloudProgress = snapshot.exists() ? snapshot.data().progress || {} : {};
+      const localProgress = loadLocalState();
+
+      state = mergeProgress(cloudProgress, localProgress);
+
+      saveLocalState();
+      if (Object.keys(localProgress).length > 0) {
+        await saveCloudState({ quiet: true });
+      }
+
+      renderBooks();
+      setSyncStatus(`Synced as ${user.email || user.displayName || "signed-in user"}`, "cloud");
+    }
+
+    async function saveCloudState(options = {}) {
+      if (!currentUser || !db) {
+        return;
+      }
+
+      if (!options.quiet) {
+        setSyncStatus("Saving progress...", "cloud");
+      }
+
+      await setDoc(
+        userProgressDoc(currentUser.uid),
+        {
+          progress: sanitizeState(state),
+          trackerVersion: 1,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      if (!options.quiet) {
+        setSyncStatus(`Synced as ${currentUser.email || currentUser.displayName || "signed-in user"}`, "cloud");
+      }
+    }
+
+    function saveState() {
+      saveLocalState();
+
+      if (!currentUser || !db) {
+        setSyncStatus(
+          firebaseIsConfigured()
+            ? "Saved locally. Sign in to sync across devices."
+            : "Saved locally. Add Firebase config to enable cloud sync.",
+          firebaseIsConfigured() ? "warning" : ""
+        );
+        return;
+      }
+
+      saveCloudState().catch((error) => {
+        console.error(error);
+        setSyncStatus("Cloud save failed. Progress is still saved in this browser.", "warning");
+      });
+    }
+
+    function percent(part, total) {
+      return total === 0 ? 0 : Math.round((part / total) * 100);
+    }
+
+    function topicStatus(id) {
+      return state[id] || { completed: false, revised: false };
+    }
+
+    function ensureTopicState(id) {
+      if (!state[id]) {
+        state[id] = { completed: false, revised: false };
+      }
+      return state[id];
+    }
+
+    function buildBookOptions() {
+      books.forEach((book) => {
+        const option = document.createElement("option");
+        option.value = book.id;
+        option.textContent = book.title.replace(/^Book \d+: /, "");
+        bookFilterEl.appendChild(option);
+      });
+    }
+
+    function renderBooks() {
+      booksEl.innerHTML = "";
+      const query = topicSearchEl.value.trim().toLowerCase();
+      const selectedBook = bookFilterEl.value;
+      let visibleTopics = 0;
+
+      books.forEach((book) => {
+        if (selectedBook !== "all" && selectedBook !== book.id) {
+          return;
+        }
+
+        const matchingTopics = book.topics
+          .map((topic, index) => ({ topic, index }))
+          .filter(({ topic }) => {
+            const searchable = `${book.title} ${book.description} ${topic}`.toLowerCase();
+            return searchable.includes(query);
+          });
+
+        if (matchingTopics.length === 0) {
+          return;
+        }
+
+        visibleTopics += matchingTopics.length;
+        const bookEl = document.createElement("article");
+        bookEl.className = "book";
+        bookEl.appendChild(renderBookHeader(book));
+
+        const listEl = document.createElement("div");
+        listEl.className = "topic-list";
+
+        matchingTopics.forEach(({ topic, index }) => {
+          listEl.appendChild(renderTopicRow(book, topic, index));
+        });
+
+        bookEl.appendChild(listEl);
+        booksEl.appendChild(bookEl);
+      });
+
+      emptyStateEl.classList.toggle("visible", visibleTopics === 0);
+      updateSummary();
+    }
+
+    function renderBookHeader(book) {
+      const total = book.topics.length;
+      const completed = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).completed).length;
+      const revised = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).revised).length;
+      const completedPercent = percent(completed, total);
+      const revisedPercent = percent(revised, total);
+
+      const header = document.createElement("header");
+      header.className = "book-header";
+      header.innerHTML = `
+        <div class="book-title">
+          <h2>${book.title}</h2>
+          <p>${book.description}</p>
+        </div>
+        <div class="book-stats">
+          <div class="progress-group">
+            <div class="progress-label">
+              <span>Completed ${completed}/${total}</span>
+              <span>${completedPercent}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill complete" style="width: ${completedPercent}%"></div>
+            </div>
+          </div>
+          <div class="progress-group">
+            <div class="progress-label">
+              <span>Revised ${revised}/${total}</span>
+              <span>${revisedPercent}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill revised" style="width: ${revisedPercent}%"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      return header;
+    }
+
+    function renderTopicRow(book, topic, index) {
+      const id = topicId(book.id, index);
+      const status = topicStatus(id);
+      const row = document.createElement("div");
+      row.className = "topic-row";
+      row.innerHTML = `
+        <div class="topic-name">
+          ${topic}
+          <small>${book.title}</small>
+        </div>
+        <label class="check">
+          <span>Completed</span>
+          <input type="checkbox" data-topic-id="${id}" data-kind="completed" ${status.completed ? "checked" : ""}>
+        </label>
+        <label class="check">
+          <span>Revised</span>
+          <input type="checkbox" data-topic-id="${id}" data-kind="revised" ${status.revised ? "checked" : ""}>
+        </label>
+      `;
+      return row;
+    }
+
+    function updateSummary() {
+      const allTopicIds = books.flatMap((book) => book.topics.map((_, index) => topicId(book.id, index)));
+      const total = allTopicIds.length;
+      const completed = allTopicIds.filter((id) => topicStatus(id).completed).length;
+      const revised = allTopicIds.filter((id) => topicStatus(id).revised).length;
+      const completedPercent = percent(completed, total);
+      const revisedPercent = percent(revised, total);
+
+      document.getElementById("totalTopics").textContent = total;
+      document.getElementById("completedCount").textContent = completed;
+      document.getElementById("revisedCount").textContent = revised;
+      document.getElementById("remainingCount").textContent = total - completed;
+      document.getElementById("overallCompleteLabel").textContent = `${completedPercent}%`;
+      document.getElementById("overallRevisionLabel").textContent = `${revisedPercent}%`;
+      document.getElementById("overallCompleteBar").style.width = `${completedPercent}%`;
+      document.getElementById("overallRevisionBar").style.width = `${revisedPercent}%`;
+    }
+
+    booksEl.addEventListener("change", (event) => {
+      const checkbox = event.target;
+      if (!(checkbox instanceof HTMLInputElement) || checkbox.type !== "checkbox") {
+        return;
+      }
+
+      const status = ensureTopicState(checkbox.dataset.topicId);
+      status[checkbox.dataset.kind] = checkbox.checked;
+      saveState();
+      renderBooks();
+    });
+
+    topicSearchEl.addEventListener("input", renderBooks);
+    bookFilterEl.addEventListener("change", renderBooks);
+
+    document.getElementById("clearSearch").addEventListener("click", () => {
+      topicSearchEl.value = "";
+      bookFilterEl.value = "all";
+      renderBooks();
+    });
+
+    document.getElementById("resetProgress").addEventListener("click", () => {
+      const shouldReset = window.confirm("Reset all completed and revised checkboxes?");
+      if (!shouldReset) {
+        return;
+      }
+
+      Object.keys(state).forEach((key) => delete state[key]);
+      saveState();
+      renderBooks();
+    });
+
+    signInButtonEl.addEventListener("click", async () => {
+      if (!firebaseIsConfigured()) {
+        window.alert("Paste your Firebase web app config into index.html first.");
+        return;
+      }
+
+      try {
+        signInButtonEl.disabled = true;
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        if (window.matchMedia("(max-width: 720px)").matches) {
+          await signInWithRedirect(auth, provider);
+        } else {
+          await signInWithPopup(auth, provider);
+        }
+      } catch (error) {
+        console.error(error);
+        setSyncStatus("Sign-in failed. Check Firebase Auth settings and authorized domains.", "warning");
+      } finally {
+        signInButtonEl.disabled = false;
+      }
+    });
+
+    signOutButtonEl.addEventListener("click", async () => {
+      if (!auth) {
+        return;
+      }
+
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error(error);
+        setSyncStatus("Sign-out failed. Please try again.", "warning");
+      }
+    });
+
+    function initializeFirebaseSync() {
+      if (!firebaseIsConfigured()) {
+        signInButtonEl.disabled = true;
+        setSyncStatus("Local-only mode. Add Firebase config to enable cloud sync.");
+        return;
+      }
+
+      const app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+
+      onAuthStateChanged(auth, async (user) => {
+        currentUser = user;
+        signInButtonEl.hidden = Boolean(user);
+        signOutButtonEl.hidden = !user;
+
+        if (!user) {
+          setSyncStatus("Saved locally. Sign in to sync across devices.", "warning");
+          renderBooks();
+          return;
+        }
+
+        try {
+          await loadCloudState(user);
+        } catch (error) {
+          console.error(error);
+          setSyncStatus("Could not load cloud progress. Local progress is still available.", "warning");
+          renderBooks();
+        }
+      });
+    }
+
+    buildBookOptions();
+    initializeFirebaseSync();
+    renderBooks();
+  </script>
+</body>
+</html>
