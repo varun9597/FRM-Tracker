@@ -16,8 +16,9 @@
       --primary: #0f766e;
       --primary-dark: #0b5f59;
       --accent: #7c3aed;
-      --complete: #16a34a;
-      --revise: #2563eb;
+      --lecture: #16a34a;
+      --book: #7c3aed;
+      --revision: #2563eb;
       --shadow: 0 12px 30px rgba(24, 32, 42, 0.08);
       --radius: 8px;
     }
@@ -157,7 +158,7 @@
 
     .overall-panel {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
       background: var(--surface);
       border: 1px solid var(--line);
@@ -195,12 +196,16 @@
       transition: width 180ms ease;
     }
 
-    .progress-fill.complete {
-      background: var(--complete);
+    .progress-fill.lecture {
+      background: var(--lecture);
     }
 
-    .progress-fill.revised {
-      background: var(--revise);
+    .progress-fill.book {
+      background: var(--book);
+    }
+
+    .progress-fill.revision {
+      background: var(--revision);
     }
 
     .toolbar {
@@ -285,7 +290,7 @@
 
     .topic-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 132px 112px;
+      grid-template-columns: minmax(0, 1fr) 104px 88px 112px;
       gap: 14px;
       align-items: center;
       padding: 12px 18px;
@@ -414,7 +419,7 @@
     <section class="topbar" aria-labelledby="page-title">
       <div class="title-block">
         <h1 id="page-title">FRM Level 1 Progress Tracker</h1>
-        <p>Track completion and revision across the four Level 1 books. This is a sample static version with placeholder topics that we can replace with your exact book/topic list.</p>
+        <p>Track lecture progress, book reading, and revision across the four Level 1 books. This is a sample static version with placeholder topics that we can replace with your exact book/topic list.</p>
       </div>
       <div class="actions">
         <button class="button" id="clearSearch" type="button">Clear Search</button>
@@ -435,36 +440,45 @@
         <strong id="totalTopics">0</strong>
       </div>
       <div class="metric">
-        <span>Completed</span>
-        <strong id="completedCount">0</strong>
+        <span>Lecture</span>
+        <strong id="lectureCount">0</strong>
       </div>
       <div class="metric">
-        <span>Revised</span>
-        <strong id="revisedCount">0</strong>
+        <span>Book</span>
+        <strong id="bookCount">0</strong>
       </div>
       <div class="metric">
-        <span>Remaining</span>
-        <strong id="remainingCount">0</strong>
+        <span>Revision</span>
+        <strong id="revisionCount">0</strong>
       </div>
     </section>
 
     <section class="overall-panel" aria-label="Overall progress">
       <div class="progress-group">
         <div class="progress-label">
-          <span>Overall Completion</span>
-          <span id="overallCompleteLabel">0%</span>
+          <span>Lecture Progress</span>
+          <span id="overallLectureLabel">0%</span>
         </div>
         <div class="progress-track">
-          <div class="progress-fill complete" id="overallCompleteBar"></div>
+          <div class="progress-fill lecture" id="overallLectureBar"></div>
         </div>
       </div>
       <div class="progress-group">
         <div class="progress-label">
-          <span>Overall Revision</span>
+          <span>Book Progress</span>
+          <span id="overallBookLabel">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill book" id="overallBookBar"></div>
+        </div>
+      </div>
+      <div class="progress-group">
+        <div class="progress-label">
+          <span>Revision Progress</span>
           <span id="overallRevisionLabel">0%</span>
         </div>
         <div class="progress-track">
-          <div class="progress-fill revised" id="overallRevisionBar"></div>
+          <div class="progress-fill revision" id="overallRevisionBar"></div>
         </div>
       </div>
     </section>
@@ -510,8 +524,8 @@
     const books = [
       {
         id: "foundations",
-        title: "Book 1: Foundations of Risk Management",
-        description: "Core risk principles, governance, and risk frameworks.",
+        title: "Book 1 - Foundations of Risk Management (20%)",
+        description: "Risk management frameworks, corporate governance, ERM, credit risk transfer, portfolio construction, and landmark risk management failure case studies.",
         topics: [
           "Risk Management: A Helicopter View",
           "The Global Financial Crisis and Risk Failures",
@@ -527,8 +541,8 @@
       },
       {
         id: "quantitative",
-        title: "Book 2: Quantitative Analysis",
-        description: "Probability, statistics, regression, simulation, and time series.",
+        title: "Book 2 - Quantitative Analysis (20%)",
+        description: "Probability distributions, hypothesis testing, regression, time series, Monte Carlo simulation, and machine learning fundamentals - the mathematical backbone of the FRM.",
         topics: [
           "Fundamentals of Probability",
           "Random Variables and Distributions",
@@ -544,8 +558,8 @@
       },
       {
         id: "markets",
-        title: "Book 3: Financial Markets and Products",
-        description: "Markets, instruments, derivatives, and product mechanics.",
+        title: "Book 3 - Financial Markets and Products (30%)",
+        description: "OTC and exchange-traded derivatives, fixed income, money markets, forwards, futures, swaps, options, central clearing, and the role of exchanges.",
         topics: [
           "Banks and Financial Intermediation",
           "Insurance Companies and Pension Plans",
@@ -561,8 +575,8 @@
       },
       {
         id: "valuation",
-        title: "Book 4: Valuation and Risk Models",
-        description: "Valuation tools, fixed income, VaR, and risk measurement.",
+        title: "Book 4 - Valuation and Risk Models (30%)",
+        description: "Value-at-Risk, bond valuation, Black-Scholes, binomial trees, the Greeks, duration, convexity, DV01, and country/sovereign risk - where theory meets measurement.",
         topics: [
           "Measures of Financial Risk",
           "Value at Risk",
@@ -633,8 +647,9 @@
         Object.entries(progressState).map(([id, status]) => [
           id,
           {
-            completed: Boolean(status.completed),
-            revised: Boolean(status.revised)
+            lecture: Boolean(status.lecture),
+            book: Boolean(status.book || status.completed),
+            revision: Boolean(status.revision || status.revised)
           }
         ])
       );
@@ -648,8 +663,9 @@
           return;
         }
 
-        merged[id].completed = merged[id].completed || status.completed;
-        merged[id].revised = merged[id].revised || status.revised;
+        merged[id].lecture = merged[id].lecture || status.lecture;
+        merged[id].book = merged[id].book || status.book;
+        merged[id].revision = merged[id].revision || status.revision;
       });
       return merged;
     }
@@ -723,13 +739,14 @@
     }
 
     function topicStatus(id) {
-      return state[id] || { completed: false, revised: false };
+      return sanitizeState({ [id]: state[id] || {} })[id];
     }
 
     function ensureTopicState(id) {
       if (!state[id]) {
-        state[id] = { completed: false, revised: false };
+        state[id] = { lecture: false, book: false, revision: false };
       }
+      state[id] = topicStatus(id);
       return state[id];
     }
 
@@ -737,7 +754,7 @@
       books.forEach((book) => {
         const option = document.createElement("option");
         option.value = book.id;
-        option.textContent = book.title.replace(/^Book \d+: /, "");
+        option.textContent = book.title.replace(/^Book \d+\s[-:]\s/, "");
         bookFilterEl.appendChild(option);
       });
     }
@@ -786,10 +803,12 @@
 
     function renderBookHeader(book) {
       const total = book.topics.length;
-      const completed = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).completed).length;
-      const revised = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).revised).length;
-      const completedPercent = percent(completed, total);
-      const revisedPercent = percent(revised, total);
+      const lecture = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).lecture).length;
+      const bookCount = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).book).length;
+      const revision = book.topics.filter((_, index) => topicStatus(topicId(book.id, index)).revision).length;
+      const lecturePercent = percent(lecture, total);
+      const bookPercent = percent(bookCount, total);
+      const revisionPercent = percent(revision, total);
 
       const header = document.createElement("header");
       header.className = "book-header";
@@ -801,20 +820,29 @@
         <div class="book-stats">
           <div class="progress-group">
             <div class="progress-label">
-              <span>Completed ${completed}/${total}</span>
-              <span>${completedPercent}%</span>
+              <span>Lecture ${lecture}/${total}</span>
+              <span>${lecturePercent}%</span>
             </div>
             <div class="progress-track">
-              <div class="progress-fill complete" style="width: ${completedPercent}%"></div>
+              <div class="progress-fill lecture" style="width: ${lecturePercent}%"></div>
             </div>
           </div>
           <div class="progress-group">
             <div class="progress-label">
-              <span>Revised ${revised}/${total}</span>
-              <span>${revisedPercent}%</span>
+              <span>Book ${bookCount}/${total}</span>
+              <span>${bookPercent}%</span>
             </div>
             <div class="progress-track">
-              <div class="progress-fill revised" style="width: ${revisedPercent}%"></div>
+              <div class="progress-fill book" style="width: ${bookPercent}%"></div>
+            </div>
+          </div>
+          <div class="progress-group">
+            <div class="progress-label">
+              <span>Revision ${revision}/${total}</span>
+              <span>${revisionPercent}%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill revision" style="width: ${revisionPercent}%"></div>
             </div>
           </div>
         </div>
@@ -833,12 +861,16 @@
           <small>${book.title}</small>
         </div>
         <label class="check">
-          <span>Completed</span>
-          <input type="checkbox" data-topic-id="${id}" data-kind="completed" ${status.completed ? "checked" : ""}>
+          <span>Lecture</span>
+          <input type="checkbox" data-topic-id="${id}" data-kind="lecture" ${status.lecture ? "checked" : ""}>
         </label>
         <label class="check">
-          <span>Revised</span>
-          <input type="checkbox" data-topic-id="${id}" data-kind="revised" ${status.revised ? "checked" : ""}>
+          <span>Book</span>
+          <input type="checkbox" data-topic-id="${id}" data-kind="book" ${status.book ? "checked" : ""}>
+        </label>
+        <label class="check">
+          <span>Revision</span>
+          <input type="checkbox" data-topic-id="${id}" data-kind="revision" ${status.revision ? "checked" : ""}>
         </label>
       `;
       return row;
@@ -847,19 +879,23 @@
     function updateSummary() {
       const allTopicIds = books.flatMap((book) => book.topics.map((_, index) => topicId(book.id, index)));
       const total = allTopicIds.length;
-      const completed = allTopicIds.filter((id) => topicStatus(id).completed).length;
-      const revised = allTopicIds.filter((id) => topicStatus(id).revised).length;
-      const completedPercent = percent(completed, total);
-      const revisedPercent = percent(revised, total);
+      const lecture = allTopicIds.filter((id) => topicStatus(id).lecture).length;
+      const bookCount = allTopicIds.filter((id) => topicStatus(id).book).length;
+      const revision = allTopicIds.filter((id) => topicStatus(id).revision).length;
+      const lecturePercent = percent(lecture, total);
+      const bookPercent = percent(bookCount, total);
+      const revisionPercent = percent(revision, total);
 
       document.getElementById("totalTopics").textContent = total;
-      document.getElementById("completedCount").textContent = completed;
-      document.getElementById("revisedCount").textContent = revised;
-      document.getElementById("remainingCount").textContent = total - completed;
-      document.getElementById("overallCompleteLabel").textContent = `${completedPercent}%`;
-      document.getElementById("overallRevisionLabel").textContent = `${revisedPercent}%`;
-      document.getElementById("overallCompleteBar").style.width = `${completedPercent}%`;
-      document.getElementById("overallRevisionBar").style.width = `${revisedPercent}%`;
+      document.getElementById("lectureCount").textContent = lecture;
+      document.getElementById("bookCount").textContent = bookCount;
+      document.getElementById("revisionCount").textContent = revision;
+      document.getElementById("overallLectureLabel").textContent = `${lecturePercent}%`;
+      document.getElementById("overallBookLabel").textContent = `${bookPercent}%`;
+      document.getElementById("overallRevisionLabel").textContent = `${revisionPercent}%`;
+      document.getElementById("overallLectureBar").style.width = `${lecturePercent}%`;
+      document.getElementById("overallBookBar").style.width = `${bookPercent}%`;
+      document.getElementById("overallRevisionBar").style.width = `${revisionPercent}%`;
     }
 
     booksEl.addEventListener("change", (event) => {
@@ -884,7 +920,7 @@
     });
 
     document.getElementById("resetProgress").addEventListener("click", () => {
-      const shouldReset = window.confirm("Reset all completed and revised checkboxes?");
+      const shouldReset = window.confirm("Reset all lecture, book, and revision checkboxes?");
       if (!shouldReset) {
         return;
       }
