@@ -486,6 +486,7 @@
     <section class="empty-state" id="emptyState">No topics match your current filter.</section>
   </main>
 
+  <script src="./firebase-config.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
     import {
@@ -505,14 +506,7 @@
     } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDtGuI2DcfwntGZmkGqaXBodxyhsLPygf4",
-      authDomain: "frmtracker.firebaseapp.com",
-      projectId: "frmtracker",
-      storageBucket: "frmtracker.firebasestorage.app",
-      messagingSenderId: "170588499208",
-      appId: "1:170588499208:web:7e257b2a8bafed540b90bd"
-    };
+    const firebaseConfig = window.FRM_FIREBASE_CONFIG || {};
 
     const books = [
       {
