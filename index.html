@@ -494,7 +494,6 @@
       GoogleAuthProvider,
       onAuthStateChanged,
       signInWithPopup,
-      signInWithRedirect,
       signOut
     } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
     import {
@@ -905,11 +904,7 @@
         signInButtonEl.disabled = true;
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: "select_account" });
-        if (window.matchMedia("(max-width: 720px)").matches) {
-          await signInWithRedirect(auth, provider);
-        } else {
-          await signInWithPopup(auth, provider);
-        }
+        await signInWithPopup(auth, provider);
       } catch (error) {
         console.error(error);
         setSyncStatus(`Sign-in failed (${describeFirebaseError(error)})`, "warning");
