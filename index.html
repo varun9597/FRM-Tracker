@@ -114,6 +114,7 @@
       font-size: 0.82rem;
       font-weight: 650;
       text-align: right;
+      overflow-wrap: anywhere;
     }
 
     .sync-status.cloud {
@@ -628,6 +629,12 @@
       syncStatusEl.className = `sync-status ${type}`.trim();
     }
 
+    function describeFirebaseError(error) {
+      const code = error && error.code ? error.code : "unknown-error";
+      const message = error && error.message ? error.message : "No detailed message was returned.";
+      return `${code}: ${message}`;
+    }
+
     function sanitizeState(progressState) {
       return Object.fromEntries(
         Object.entries(progressState).map(([id, status]) => [
@@ -911,7 +918,7 @@
         }
       } catch (error) {
         console.error(error);
-        setSyncStatus("Sign-in failed. Check Firebase Auth settings and authorized domains.", "warning");
+        setSyncStatus(`Sign-in failed (${describeFirebaseError(error)})`, "warning");
       } finally {
         signInButtonEl.disabled = false;
       }
@@ -926,7 +933,7 @@
         await signOut(auth);
       } catch (error) {
         console.error(error);
-        setSyncStatus("Sign-out failed. Please try again.", "warning");
+        setSyncStatus(`Sign-out failed (${describeFirebaseError(error)})`, "warning");
       }
     });
 
@@ -956,7 +963,7 @@
           await loadCloudState(user);
         } catch (error) {
           console.error(error);
-          setSyncStatus("Could not load cloud progress. Local progress is still available.", "warning");
+          setSyncStatus(`Could not load cloud progress (${describeFirebaseError(error)}). Local progress is still available.`, "warning");
           renderBooks();
         }
       });
